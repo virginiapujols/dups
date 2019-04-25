@@ -7,6 +7,8 @@ class BugReport:
         self.duplicate_id = duplicate_id
         if duplicate_id is not None:
             self.is_duplicate = True
+        else:
+            self.is_duplicate = False
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

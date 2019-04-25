@@ -67,10 +67,11 @@ def parse_xml_to_bug_reports(dataset_xml_path):
         bug_content_desc = bug_element.find('short_desc').text + " "
 
         for info in bug_element.findall('long_desc'):
-            bug_content_desc += info.find('thetext').text + " "
+            if info.find('thetext').text is not None:
+                bug_content_desc += info.find('thetext').text + " "
 
         dupl_id = None
-        if bug_element.find('dup_id'):
+        if bug_element.find('dup_id') is not None:
             dupl_id = bug_element.find('dup_id').text
 
         document_corpus = preprocess(bug_content_desc)
