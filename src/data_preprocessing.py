@@ -11,7 +11,7 @@ tokenizer = TweetTokenizer()
 
 
 def stop_words_list():
-    with open('data/stop-words.txt', 'r') as file:
+    with open(r'../data/stop-words.txt', 'r') as file:
         return file.read().splitlines()
 
 
