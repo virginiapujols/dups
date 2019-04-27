@@ -5,6 +5,7 @@ class BugReport:
         self.description = description
         self.content_corpus = corpus
         self.duplicate_id = duplicate_id
+
         if duplicate_id is not None:
             self.is_duplicate = True
         else:

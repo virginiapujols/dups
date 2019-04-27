@@ -55,7 +55,7 @@ def preprocess(document):
         lemmatized_words.append(lemma)
         print("{0:20}{1:20}".format('-'.join(tag), lemma))
 
-    return lemmatized_words
+    return ' '.join(lemmatized_words)
 
 
 def parse_xml_to_bug_reports(dataset_xml_path):

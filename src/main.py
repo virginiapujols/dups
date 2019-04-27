@@ -7,6 +7,9 @@ import os
 
 import os
 
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+
 
 def save_pickle(pickle_path, to_pickle):
     pickle_out = open(pickle_path, 'wb')
@@ -29,45 +32,20 @@ def load_object(pickle_path, method_to_invoke, args=()):
     return obj
 
 
-bug_reports = load_object(pickle_path=r"../data/bug_reports.pickle",
-                          method_to_invoke=data_prep.parse_xml_to_bug_reports,
-                          args=r"../data/filtered_mozilla_report_2018.xml")
+filtered_bug_reports = load_object(pickle_path=r"../data/bug_reports.pickle",
+                                   method_to_invoke=data_prep.parse_xml_to_bug_reports,
+                                   args=r"../data/filtered_mozilla_report_2018.xml")
 
 buckets = load_object(pickle_path=r"../data/dict_buckets.pickle",
                       method_to_invoke=bucket_ext.create_buckets,
-                      args=bug_reports)
-print(bug_reports)
+                      args=filtered_bug_reports)
 
-print(buckets)
-#Pairs of duplicates
-#Pairs of non-duplicates
+sample_bug_report = filtered_bug_reports[0]
 
-
-
-
-
-
-
-
-#
-# if not os.path.isfile(r"../data/bug_reports.pickle"):
-#     path = r"../data/filtered_mozilla_report_2018.xml"
-#     bug_reports = data_prep.parse_xml_to_bug_reports(path)
-#     save_pickle(r"../data/bug_reports.pickle", bug_reports)
-# else:
-#     bug_reports = load_pickle(r"../data/bug_reports.pickle")
-#
-#
-# # pickle for dictionary with bucket
-# if not os.path.isfile(r"../data/dict_buckets.pickle"):  # exists
-#     tf_idf_data_frame = feat_extr.generate_tf_idf_model(bug_reports)
-#     buckets = bucket_ext.create_buckets(bug_reports)
-#     save_pickle(r"../data/dict_buckets.pickle", buckets)
-# else:
-#     buckets = load_pickle(r"../data/dict_buckets.pickle")
-
-
-# pickle for TF-IDF with bucket
+sample_master = list(buckets.keys())[3]
+sample_bucket = buckets[sample_master]
+sample_bucket_corpus = [bug.content_corpus for bug in sample_bucket]
+bucket_ext.predict_bucket(sample_bug_report.content_corpus, sample_bucket_corpus)
 
 
 
@@ -77,16 +55,13 @@ print(buckets)
 
 
 
-#
-# path = r"../data/filtered_mozilla_report_2018.xml"
-# bug_reports = data_prep.parse_xml_to_bug_reports(path)
-# feat_extr.generate_tf_idf_model(bug_reports)
-#
-# buckets = bucket_ext.create_buckets(bug_reports)
-# pickle_out = open(r"../data/dict_buckets.pickle", 'wb')
-# pickle.dump(buckets, pickle_out)
-# pickle_out.close()
-#
-# pickle_in = open(r"../data/dict_buckets.pickle", 'rb')
-# saved_buckets = pickle.load(pickle_in)
-# print(saved_buckets)
+
+
+
+# clf = SVC(kernel='linear')
+# clf.fit(x_train,y_train)
+# y_pred = clf.predict(x_test)
+# print(accuracy_score(y_test,y_pred))
+
+
+
