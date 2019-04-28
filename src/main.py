@@ -4,7 +4,7 @@ import src.buckets_extraction as bucket_ext
 import pandas
 import pickle
 import os
-
+from src import train_model as train_model
 import os
 
 from sklearn.svm import SVC
@@ -40,28 +40,29 @@ buckets = load_object(pickle_path=r"../data/dict_buckets.pickle",
                       method_to_invoke=bucket_ext.create_buckets,
                       args=filtered_bug_reports)
 
-sample_bug_report = filtered_bug_reports[0]
+for master in buckets:
+    report_list = buckets[master]
+    if len(report_list) > 10:
+        print("bucket: {} - total: {}".format(master.id, len(report_list)))
 
-sample_master = list(buckets.keys())[3]
-sample_bucket = buckets[sample_master]
-sample_bucket_corpus = [bug.content_corpus for bug in sample_bucket]
-bucket_ext.predict_bucket(sample_bug_report.content_corpus, sample_bucket_corpus)
+test_bug_reports = dict((master, duplicates[-2:]) for master, duplicates in buckets.items() if len(buckets[master]) >= 10)
+buckets = dict((master, duplicates[0:-2] if len(duplicates) >= 10 else duplicates) for master, duplicates in buckets.items())
 
+print("Begin: Creating classifier")
+if not os.path.isfile("../data/classifier.pickle"):
+    classifier = train_model.create_classifier(buckets, filtered_bug_reports)
+    save_pickle("../data/classifier.pickle", classifier)
+else:
+    classifier = load_pickle("../data/classifier.pickle")
+print("End: Creating classifier")
 
-
-
-
-
-
-
-
-
-
-
-# clf = SVC(kernel='linear')
-# clf.fit(x_train,y_train)
-# y_pred = clf.predict(x_test)
-# print(accuracy_score(y_test,y_pred))
-
+print("Begin: Prediction")
+for master, duplicates in test_bug_reports.items():
+    for test_report in duplicates:
+        print(f"MASTER:{master.id} - Current bug: {test_report.id}")
+        candidate_list = bucket_ext.propose_candidate(classifier, test_report, buckets)
+        print("TOP 10 candidates: ", candidate_list[0:10])
+        break  # TODO: remove this line
+print("End: Prediction")
 
 

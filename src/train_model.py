@@ -1,4 +1,22 @@
 import random
+import numpy
+from sklearn import svm
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+"""
+Generic steps to produce a classifier
+
+INPUT: buckets
+Generate pairs of duplicates
+Generate pairs of non-duplicates
+
+Generate feature vector of duplicates
+Generate feature vector of non-duplicates
+
+Train using SVM
+
+OUTPUT: return classifier (discriminative model)
+"""
 
 
 def generate_pair_of_duplicates(buckets):
@@ -26,7 +44,7 @@ def generate_pair_of_duplicates(buckets):
 def generate_pair_of_non_duplicates(buckets):
     """
     To create negative examples, one could pair one report
-    from one bucket with another report from the other bucket.
+    from one bucket with another report from the another bucket.
     Paper: A Discriminative Model Approach for Accurate Duplicate Bug Report Retrieval
 
     :param buckets: dictionary of masters (key) with its duplicate bug reports (value).
@@ -53,13 +71,50 @@ def generate_pair_of_non_duplicates(buckets):
         dup_pair1 = random.choice(bucket_list1)
         dup_pair2 = random.choice(bucket_list2)
 
-        non_dup_pair1 = (dup_pair1[0], dup_pair2[0])
-        non_dup_pair2 = (dup_pair1[1], dup_pair2[1])
+        non_dup_pair = (dup_pair1, dup_pair2)
 
-        pair_of_non_duplicates.append(non_dup_pair1)
-        pair_of_non_duplicates.append(non_dup_pair2)
+        pair_of_non_duplicates.append(non_dup_pair)
         count -= 1
 
     return pair_of_non_duplicates
 
+
+def extract_features(documents):
+    pass
+
+
+def create_classifier(buckets, filtered_bug_reports):
+    list_content_corpus = [br.content_corpus for br in filtered_bug_reports]
+    bug_report_dict = dict((br.id, i) for i, br in enumerate(filtered_bug_reports))
+
+    pair_of_duplicates = generate_pair_of_duplicates(buckets)
+    pair_of_non_duplicates = generate_pair_of_non_duplicates(buckets)
+
+    print("Begin: Creating TF-IDF")
+    tfidf_vectorizer = TfidfVectorizer(sublinear_tf=True)
+    tfidf_matrix = tfidf_vectorizer.fit_transform(list_content_corpus).toarray()
+    print("End: Creating TF-IDF")
+
+    print("Begin: Create feature vectors")
+    tfidf_sum = []
+    merged_pairs = pair_of_duplicates + pair_of_non_duplicates
+    for dup1, dup2 in merged_pairs:
+        position_dup1 = bug_report_dict[dup1.id]
+        position_dup2 = bug_report_dict[dup2.id]
+
+        tfidf_dup1 = tfidf_matrix[position_dup1]
+        tfidf_dup2 = tfidf_matrix[position_dup2]
+        combined_tfidf = numpy.sum([tfidf_dup1, tfidf_dup2], axis=0)
+        tfidf_sum.append(combined_tfidf)
+    print("End: Create feature vectors")
+    print("Begin: Train model")
+    # features_labels creates a combined list of labels where 1 represents duplicates and 0 represent non-duplicates.
+    features_labels = len(pair_of_duplicates) * [1] + len(pair_of_non_duplicates) * [0]
+    features_matrix = tfidf_sum
+
+    classifier = svm.SVC(kernel='linear', probability=True, verbose=True, max_iter=1)
+    classifier.fit(features_matrix, features_labels)
+    print("End: Train model")
+
+    return classifier
 

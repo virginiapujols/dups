@@ -13,13 +13,7 @@ class BugReport:
 
     def __eq__(self, o):
         return isinstance(o, BugReport) and \
-               self.id == o.id and \
-               self.description == o.description and \
-               self.duplicate_id == o.duplicate_id and \
-               self.is_duplicate == o.is_duplicate
+               self.id == o.id
 
     def __hash__(self):
-        return hash((self.id,
-                     self.description,
-                     self.duplicate_id,
-                     self.is_duplicate))
+        return hash(self.id)
