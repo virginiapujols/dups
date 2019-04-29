@@ -48,21 +48,25 @@ for master in buckets:
 test_bug_reports = dict((master, duplicates[-2:]) for master, duplicates in buckets.items() if len(buckets[master]) >= 10)
 buckets = dict((master, duplicates[0:-2] if len(duplicates) >= 10 else duplicates) for master, duplicates in buckets.items())
 
+get_feature_vector_by_bug_id = feat_extr.make_feature_vector_getter(filtered_bug_reports)
+
+
 print("Begin: Creating classifier")
 if not os.path.isfile("../data/classifier.pickle"):
-    classifier = train_model.create_classifier(buckets, filtered_bug_reports)
+    classifier = train_model.create_classifier(buckets, get_feature_vector_by_bug_id)
     save_pickle("../data/classifier.pickle", classifier)
 else:
     classifier = load_pickle("../data/classifier.pickle")
 print("End: Creating classifier")
 
+
 print("Begin: Prediction")
 for master, duplicates in test_bug_reports.items():
+    print("TOP 10 candidates: ")
     for test_report in duplicates:
         print(f"MASTER:{master.id} - Current bug: {test_report.id}")
-        candidate_list = bucket_ext.propose_candidate(classifier, test_report, buckets)
-        print("TOP 10 candidates: ", candidate_list[0:10])
-        break  # TODO: remove this line
+        candidate_list = bucket_ext.propose_candidate(classifier, test_report, buckets, get_feature_vector_by_bug_id)
+
+        for candidate, probability in candidate_list[0:10]:
+            print(f"Master id: {candidate.id} | probability {probability} ")
 print("End: Prediction")
-
-

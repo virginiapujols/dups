@@ -1,7 +1,7 @@
 import random
 import numpy
 from sklearn import svm
-from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 """
 Generic steps to produce a classifier
@@ -79,31 +79,21 @@ def generate_pair_of_non_duplicates(buckets):
     return pair_of_non_duplicates
 
 
-def extract_features(documents):
-    pass
-
-
-def create_classifier(buckets, filtered_bug_reports):
-    list_content_corpus = [br.content_corpus for br in filtered_bug_reports]
-    bug_report_dict = dict((br.id, i) for i, br in enumerate(filtered_bug_reports))
-
+def create_classifier(buckets, get_feature_vector_by_bug_id):
     pair_of_duplicates = generate_pair_of_duplicates(buckets)
     pair_of_non_duplicates = generate_pair_of_non_duplicates(buckets)
-
-    print("Begin: Creating TF-IDF")
-    tfidf_vectorizer = TfidfVectorizer(sublinear_tf=True)
-    tfidf_matrix = tfidf_vectorizer.fit_transform(list_content_corpus).toarray()
-    print("End: Creating TF-IDF")
-
     print("Begin: Create feature vectors")
     tfidf_sum = []
     merged_pairs = pair_of_duplicates + pair_of_non_duplicates
     for dup1, dup2 in merged_pairs:
-        position_dup1 = bug_report_dict[dup1.id]
-        position_dup2 = bug_report_dict[dup2.id]
+        # position_dup1 = bug_report_dict[dup1.id]
+        # position_dup2 = bug_report_dict[dup2.id]
+        #
+        # tfidf_dup1 = tfidf_matrix[position_dup1]
+        # tfidf_dup2 = tfidf_matrix[position_dup2]
+        tfidf_dup1 = get_feature_vector_by_bug_id(dup1.id)
+        tfidf_dup2 = get_feature_vector_by_bug_id(dup2.id)
 
-        tfidf_dup1 = tfidf_matrix[position_dup1]
-        tfidf_dup2 = tfidf_matrix[position_dup2]
         combined_tfidf = numpy.sum([tfidf_dup1, tfidf_dup2], axis=0)
         tfidf_sum.append(combined_tfidf)
     print("End: Create feature vectors")
@@ -115,6 +105,5 @@ def create_classifier(buckets, filtered_bug_reports):
     classifier = svm.SVC(kernel='linear', probability=True, verbose=True, max_iter=1)
     classifier.fit(features_matrix, features_labels)
     print("End: Train model")
-
     return classifier
 

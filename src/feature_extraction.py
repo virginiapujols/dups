@@ -1,6 +1,6 @@
 import pandas as pd
 import math
-
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 def get_documents_unique_terms(bug_documents):
     unique_terms = set()
@@ -34,3 +34,23 @@ def get_idf(term, bug_documents):
     total_docs = len(bug_documents)  # the number of documents in the collection.
     inverse_doc_freq = math.log10(total_docs / document_freq)
     return inverse_doc_freq
+
+
+def extract_features(filtered_bug_reports):
+    list_content_corpus = [br.content_corpus for br in filtered_bug_reports]
+    print("Begin: Creating TF-IDF")
+    tfidf_vectorizer = TfidfVectorizer(sublinear_tf=True)
+    tfidf_matrix = tfidf_vectorizer.fit_transform(list_content_corpus).toarray()
+    print("End: Creating TF-IDF")
+    return tfidf_matrix
+
+
+def make_feature_vector_getter(filtered_bug_reports):
+    tfidf_matrix = extract_features(filtered_bug_reports)
+    bug_report_dict = dict((br.id, i) for i, br in enumerate(filtered_bug_reports))
+
+    def get_feature_vector_by_bug_id(bug_id):
+        pos = bug_report_dict[bug_id]
+        tfidf_vector = tfidf_matrix[pos]
+        return tfidf_vector
+    return get_feature_vector_by_bug_id
