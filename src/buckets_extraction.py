@@ -55,7 +55,7 @@ def create_buckets(report_list):
 #     return max_similarity
 
 
-def propose_candidate(classifier, new_bug_report, buckets, get_feature_vector_by_bug_id):
+def propose_candidate(classifier, new_bug_report, buckets, get_similarity):
     """
     Returns a duplicate candidate list for a new report.
     Iterates over all the buckets in the repository and calculates
@@ -74,14 +74,14 @@ def propose_candidate(classifier, new_bug_report, buckets, get_feature_vector_by
         Create candidate duplicate pairs between new_bug_report and all the reports in the bucket.
         Each pair is represented by a vector of features.
         '''
-        bug_reports_vectors = [get_feature_vector_by_bug_id(b.id) for b in bucket]
-        query_features_vector = get_feature_vector_by_bug_id(new_bug_report.id)
-        candidates = [numpy.sum([query_features_vector, doc_features__vector], axis=0) for doc_features__vector in bug_reports_vectors]
+        # bug_reports_vectors = [get_feature_vector_by_bug_id(b.id) for b in bucket]
+        # query_features_vector = get_feature_vector_by_bug_id(new_bug_report.id)
+        # candidates = [numpy.sum([query_features_vector, doc_features__vector], axis=0)
+        #               for doc_features__vector in bug_reports_vectors]
 
-        '''
-        Returns the similarity between new_bug_report and a bucket.
-        '''
-        for combined_features_vector in candidates:
+        candidates = [get_similarity(new_bug_report.id, br.id) for br in bucket]
+        ''' Returns the similarity between new_bug_report and a bucket. '''
+        for candidate_similarity in candidates:
             '''
             predict_proba returns the probabilities of each class (label) in the classifier as 2D ndarray 
             classifier.classes_ return the classes of the model. 
@@ -91,12 +91,13 @@ def propose_candidate(classifier, new_bug_report, buckets, get_feature_vector_by
             '''
             classifier_classes = classifier.classes_
             positive_class = classifier_classes[1]
+            features_matrix = numpy.array([candidate_similarity]).reshape(-1, 1)
 
-            classes_probability = classifier.predict_proba([combined_features_vector])
+            classes_probability = classifier.predict_proba(features_matrix)
             max_similarity = max(max_similarity, classes_probability[0, positive_class])
         top_similar_buckets.append((master, max_similarity))
 
-    return sorted(top_similar_buckets, key=lambda item: item[1])
+    return sorted(top_similar_buckets, key=lambda item: item[1], reverse=True)
 
 
 

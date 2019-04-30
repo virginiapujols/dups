@@ -2,10 +2,12 @@ import nltk
 from nltk.tokenize import TweetTokenizer
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
+from nltk import PorterStemmer
+
 import xml.etree.ElementTree as ET
 from src.BugReport import BugReport
 
-
+porter_stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 tokenizer = TweetTokenizer()
 
@@ -34,7 +36,7 @@ def get_lemma_pos(tag):
 def preprocess(document):
     standard_stop_words = stop_words_list()
 
-    document = document.replace("/'", " ")
+    # document = document.replace("/'", " ")
     token_words = tokenize(document)
     token_words = [i.lower() for i in token_words]
     tagged_words = nltk.pos_tag(token_words)
@@ -47,13 +49,12 @@ def preprocess(document):
         w = tag[0]
         type = tag[1]
 
-        if w in standard_stop_words:
-            continue
-
         # Keep the lemma of each word
-        lemma = lemmatizer.lemmatize(w, pos=get_lemma_pos(type))
-        lemmatized_words.append(lemma)
-        print("{0:20}{1:20}".format('-'.join(tag), lemma))
+        #root = lemmatizer.lemmatize(w, pos=get_lemma_pos(type))
+        root = porter_stemmer.stem(w)
+        if root not in standard_stop_words:
+            lemmatized_words.append(root)
+            print("{0:20}{1:20}".format('-'.join(tag), root))
 
     return ' '.join(lemmatized_words)
 
@@ -69,6 +70,7 @@ def parse_xml_to_bug_reports(dataset_xml_path):
         for info in bug_element.findall('long_desc'):
             if info.find('thetext').text is not None:
                 bug_content_desc += info.find('thetext').text + " "
+                break  # we only need the first comment which is the description of the issue.
 
         dupl_id = None
         if bug_element.find('dup_id') is not None:
