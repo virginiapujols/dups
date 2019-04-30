@@ -1,7 +1,8 @@
 import src.data_preprocessing as data_prep
 import src.feature_extraction as feat_extr
 import src.buckets_extraction as bucket_ext
-from src import train_model as train_model
+import src.train_model as train_model
+import src.metrics as metrics
 import pickle
 import os
 
@@ -47,7 +48,6 @@ train_buckets = dict((master, duplicates[0:-2] if len(duplicates) >= 10 else dup
 
 get_similarity = feat_extr.make_similarity_getter(filtered_bug_reports)
 test = get_similarity("1497762", "1497762")
-#get_feature_vector_by_bug_id = feat_extr.make_feature_vector_getter(filtered_bug_reports)
 
 
 print("Begin: Creating classifier")
@@ -59,8 +59,16 @@ else:
 print("End: Creating classifier")
 
 print("Begin: Prediction")
+
+total_tests = 0
+top1_guessed = 0
+top5_guessed = 0
+top10_guessed = 0
+rank_list = []
+
 for master, duplicates in test_buckets.items():
     for test_report in duplicates:
+        total_tests += 1
         print(f"\nEvaluating report = {test_report.id}, belonging to master:{master.id}")
         candidate_list = bucket_ext.propose_candidate(classifier,
                                                       test_report,
@@ -74,5 +82,27 @@ for master, duplicates in test_buckets.items():
             print(f"{index}. Master id: {candidate.id} | probability {probability} ")
             if master.id == candidate.id:
                 print(f"----- Found bucket in Top {index}")
+                rank_list.append(index)
+
+                if index == 1:
+                    top1_guessed += 1
+                elif index == 5:
+                    top5_guessed += 1
+                elif index == 10:
+                    top10_guessed += 1
 
 print("End: Prediction")
+
+print("Begin: Metrics")
+
+''' Recall Rate for the Top 1 Rank '''
+metrics.recall_rate(top1_guessed, total_tests)
+''' Recall Rate for the Top 5 Rank '''
+metrics.recall_rate(top5_guessed, total_tests)
+''' Recall Rate for the Top 10 Rank '''
+metrics.recall_rate(top10_guessed, total_tests)
+
+''' Mean Reciprocal Rank '''
+metrics.mean_reciprocal_rank(rank_list, total_tests)
+
+print("End: Metrics")

@@ -83,16 +83,10 @@ def create_classifier(buckets, get_similarity):
     pair_of_duplicates = generate_pair_of_duplicates(buckets)
     pair_of_non_duplicates = generate_pair_of_non_duplicates(buckets)
     print("Begin: Create feature vectors")
-    tfidf_sum = []
     merged_pairs = pair_of_duplicates + pair_of_non_duplicates
 
     tfidf_sum = [get_similarity(dup1.id, dup2.id) for dup1, dup2 in merged_pairs]
-    # for dup1, dup2 in merged_pairs:
-    #     tfidf_dup1 = get_feature_vector_by_bug_id(dup1.id)
-    #     tfidf_dup2 = get_feature_vector_by_bug_id(dup2.id)
-    #
-    #     combined_tfidf = numpy.sum([tfidf_dup1, tfidf_dup2], axis=0)
-    #     tfidf_sum.append(combined_tfidf)
+
     print("End: Create feature vectors")
     print("Begin: Train model")
     # features_labels creates a combined list of labels where 1 represents duplicates and 0 represent non-duplicates.
